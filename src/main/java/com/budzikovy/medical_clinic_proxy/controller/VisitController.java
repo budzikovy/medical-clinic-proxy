@@ -17,8 +17,10 @@ public class VisitController {
     private final VisitService visitService;
 
     @GetMapping
-    public List<VisitDto> getVisitsByPatient(@RequestParam("patientId") Long patientId) {
-        return visitService.getVisitsByPatient(patientId);
+    public List<VisitDto> getVisitsByPatient(@RequestParam("patientId") Long patientId,
+                                             @RequestParam(value = "page", defaultValue = "0") int page,
+                                             @RequestParam(value = "size", defaultValue = "10") int size) {
+        return visitService.getVisitsByPatient(patientId, page, size);
     }
 
     @PutMapping("/{visitId}/patient/{patientId}")
@@ -27,15 +29,12 @@ public class VisitController {
     }
 
     @GetMapping("/available")
-    public List<VisitDto> getAvailableVisits(@RequestParam("doctorId") Long doctorId) {
-        return visitService.getAvailableVisits(doctorId);
+    public List<VisitDto> getAvailableVisits(@RequestParam(value = "doctorId", required = false) Long doctorId,
+                                             @RequestParam(value = "specialization", required = false) String specialization,
+                                             @RequestParam(value = "days", required = false, defaultValue = "1") String days,
+                                             @RequestParam(value = "page", defaultValue = "0") int page,
+                                             @RequestParam(value = "size", defaultValue = "10") int size) {
+        return visitService.getAvailableVisits(doctorId, specialization, days, page, size);
     }
-
-//    @GetMapping("/by-specialization-and-date")
-//    public List<VisitDto> getAvailableVisitsBySpecializationAndDate(
-//            @RequestParam("specialization") String specialization,
-//            @RequestParam("date") String date) {
-//        return visitService.getAvailableVisitsBySpecializationAndDate(specialization, date);
-//    }
 
 }

@@ -1,12 +1,13 @@
 package com.budzikovy.medical_clinic_proxy.model.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Builder
-@Data
+@Getter
+@Setter
 public class VisitDto {
 
     private Long id;
@@ -14,5 +15,6 @@ public class VisitDto {
     private LocalDateTime visitEndTime;
     private Long doctorId;
     private Long patientId;
+
 
 }
