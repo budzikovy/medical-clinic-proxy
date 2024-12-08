@@ -8,14 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,15 +49,14 @@ public class VisitControllerTest {
             .patientId(null)
             .build();
 
-    int page = 0;
-    int size = 10;
+    Pageable pageable = PageRequest.of(0,10);
 
     @Test
     void getVisitsByPatient_DataCorrect_ReturnStatus200() throws Exception {
 
         List<VisitDto> visits = List.of(visitDTO);
 
-        when(visitService.getVisitsByPatient(1L, page, size)).thenReturn(visits);
+        when(visitService.getVisitsByPatient(1L, pageable)).thenReturn(visits);
 
         mockMvc.perform(get("/visits?patientId=1&page=0&size=10"))
                 .andDo(print())
@@ -92,9 +90,9 @@ public class VisitControllerTest {
     void getAvailableVisits_WithDoctorId_DataCorrect_ReturnStatus200() throws Exception {
 
         List<VisitDto> availableVisits = List.of(availableVisit);
-        when(visitService.getAvailableVisits(1L, null, "1", 0, 10)).thenReturn(availableVisits);
+        when(visitService.getAvailableVisits(1L, null, 1, pageable)).thenReturn(availableVisits);
 
-        mockMvc.perform(get("/visits/available?doctorId=1"))
+        mockMvc.perform(get("/visits/available?doctorId=1&page=0&size=10"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -103,14 +101,13 @@ public class VisitControllerTest {
                 .andExpect(jsonPath("$[0].visitEndTime").value("2024-12-13T12:15:00"))
                 .andExpect(jsonPath("$[0].doctorId").value(1L))
                 .andExpect(jsonPath("$[0].patientId").isEmpty());
-
     }
 
     @Test
     void getAvailableVisits_WithSpecAndDays_DataCorrect_ReturnStatus200() throws Exception {
 
         List<VisitDto> availableVisits = List.of(availableVisit);
-        when(visitService.getAvailableVisits(null, "surgeon", "10", 0, 10)).thenReturn(availableVisits);
+        when(visitService.getAvailableVisits(null, "surgeon", 10, pageable)).thenReturn(availableVisits);
 
         mockMvc.perform(get("/visits/available?specialization=surgeon&days=10&page=0&size=10"))
                 .andDo(print())
@@ -121,7 +118,5 @@ public class VisitControllerTest {
                 .andExpect(jsonPath("$[0].visitEndTime").value("2024-12-13T12:15:00"))
                 .andExpect(jsonPath("$[0].doctorId").value(1L))
                 .andExpect(jsonPath("$[0].patientId").isEmpty());
-
     }
-
 }

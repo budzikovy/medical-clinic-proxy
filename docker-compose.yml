@@ -10,6 +10,9 @@ services:
     networks:
       - medical-clinic-network
 
+    environment:
+      SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_MEDICALCLINICCLIENT_URL: http://app:8080
+
 networks:
   medical-clinic-network:
     external: true

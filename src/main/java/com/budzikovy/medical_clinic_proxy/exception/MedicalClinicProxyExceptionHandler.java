@@ -19,4 +19,17 @@ public class MedicalClinicProxyExceptionHandler {
         return new ResponseEntity<>(errorMessageDTO, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(FeignException.NotFound.class)
+    public ResponseEntity<ErrorMessageDTO> handleFeignExceptionNotFound(FeignException ex) {
+        String errorMessage = ex.getMessage();
+        ErrorMessageDTO errorMessageDTO = new ErrorMessageDTO(errorMessage, LocalDateTime.now(), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorMessageDTO, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(FeignException.BadRequest.class)
+    public ResponseEntity<ErrorMessageDTO> handleFeignExceptionBadRequest(FeignException ex) {
+        String errorMessage = ex.getMessage();
+        ErrorMessageDTO errorMessageDTO = new ErrorMessageDTO(errorMessage, LocalDateTime.now(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorMessageDTO, HttpStatus.BAD_REQUEST);
+    }
 }

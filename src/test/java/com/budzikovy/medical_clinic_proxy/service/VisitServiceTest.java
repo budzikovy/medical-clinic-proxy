@@ -2,9 +2,12 @@ package com.budzikovy.medical_clinic_proxy.service;
 
 import com.budzikovy.medical_clinic_proxy.client.MedicalClinicClient;
 import com.budzikovy.medical_clinic_proxy.model.dto.VisitDto;
+import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,27 +28,24 @@ public class VisitServiceTest {
 
     private VisitDto visitDto = VisitDto.builder()
             .id(1L)
-            .visitStartTime(LocalDateTime.of(2024, 12,12,18,0))
-            .visitEndTime(LocalDateTime.of(2024, 12,12,19,0))
+            .visitStartTime(LocalDateTime.of(2024, 12, 12, 18, 0))
+            .visitEndTime(LocalDateTime.of(2024, 12, 12, 19, 0))
             .doctorId(1L)
             .patientId(null)
             .build();
 
     Long patientId = 1L;
-
     Long visitId = 1L;
-
     Long doctorId = 1L;
 
-    int page = 0;
-    int size = 10;
+    Pageable pageable = PageRequest.of(0,10);
 
     @Test
     void getVisitsByPatient_DataCorrect_VisitListReturned() {
         List<VisitDto> visits = List.of(visitDto);
-        when(medicalClinicClient.getVisitsByPatient(patientId, page, size)).thenReturn(visits);
+        when(medicalClinicClient.getVisitsByPatient(patientId, pageable)).thenReturn(visits);
 
-        List<VisitDto> result = visitService.getVisitsByPatient(patientId, page, size);
+        List<VisitDto> result = visitService.getVisitsByPatient(patientId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -57,9 +57,9 @@ public class VisitServiceTest {
     @Test
     void getVisitsByPatient_PatientNotFound_EmptyListReturned() {
         Long patientId = 20L;
-        when(medicalClinicClient.getVisitsByPatient(patientId, page, size)).thenReturn(List.of());
+        when(medicalClinicClient.getVisitsByPatient(patientId, pageable)).thenReturn(List.of());
 
-        List<VisitDto> result = visitService.getVisitsByPatient(patientId, page, size);
+        List<VisitDto> result = visitService.getVisitsByPatient(patientId, pageable);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -70,8 +70,8 @@ public class VisitServiceTest {
 
         VisitDto assignedVisit = VisitDto.builder()
                 .id(visitId)
-                .visitStartTime(LocalDateTime.of(2024,12,12,18,0))
-                .visitEndTime(LocalDateTime.of(2024,12,12,19,0))
+                .visitStartTime(LocalDateTime.of(2024, 12, 12, 18, 0))
+                .visitEndTime(LocalDateTime.of(2024, 12, 12, 19, 0))
                 .doctorId(1L)
                 .patientId(patientId)
                 .build();
@@ -86,61 +86,58 @@ public class VisitServiceTest {
         assertEquals(assignedVisit.getVisitStartTime().toString(), result.getVisitStartTime().toString());
         assertEquals(assignedVisit.getVisitEndTime().toString(), result.getVisitEndTime().toString());
         assertEquals(assignedVisit.getDoctorId(), result.getDoctorId());
-
     }
 
     @Test
-    void assignPatientToVisit_VisitNotFound_FeignExceptionThrown() {
+    void assignPatientToVisit_VisitNotFound_FeignExceptionNotFoundThrown() {
+        Long visitId = 99L;
 
-        Long visitId = 20L;
         when(medicalClinicClient.assignPatientToVisit(visitId, patientId))
-                .thenThrow(new RuntimeException("Visit not found"));
+                .thenThrow(FeignException.NotFound.class);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        FeignException.NotFound exception = assertThrows(FeignException.NotFound.class,
                 () -> visitService.assignPatientToVisit(visitId, patientId));
-        assertEquals("Visit not found", exception.getMessage());
+
+        assertNotNull(exception);
     }
 
     @Test
     void getAvailableVisits_WithDoctorId_DataCorrect_ReturnVisits() {
 
         List<VisitDto> visits = List.of(visitDto);
-        when(medicalClinicClient.getAvailableVisitsByDoctorId(doctorId, page, size)).thenReturn(visits);
+        when(medicalClinicClient.getAvailableVisits(doctorId, null, 0, pageable)).thenReturn(visits);
 
-        List<VisitDto> result = visitService.getAvailableVisits(doctorId, null, null, page, size);
+        List<VisitDto> result = visitService.getAvailableVisits(doctorId, null, 0, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(visitDto.getId(), result.get(0).getId());
-
     }
 
     @Test
     void getAvailableVisits_WithSpecializationAndDays_DataCorrect_ReturnVisits() {
 
-        String specialization = "Cardiology";
-        String days = "Monday";
+        String specialization = "surgeon";
+        int days = 10;
         List<VisitDto> visits = List.of(visitDto);
-        when(medicalClinicClient.getAvailableVisitsBySpecializationAndDay(specialization, days, page, size)).thenReturn(visits);
+        when(medicalClinicClient.getAvailableVisits(null, specialization, days, pageable)).thenReturn(visits);
 
-        List<VisitDto> result = visitService.getAvailableVisits(null, specialization, days, page, size);
+        List<VisitDto> result = visitService.getAvailableVisits(null, specialization, days, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(visitDto.getId(), result.get(0).getId());
-
     }
 
     @Test
-    void getAvailableVisits_WithInvalidParameters_ThrowsIllegalArgumentException() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> visitService.getAvailableVisits(null, null, null, page, size));
-        assertEquals("Either doctorId or specialization and day must be provided", exception.getMessage());
+    void getAvailableVisits_WithInvalidParameters_ThrowsFeignExceptionBadRequest() {
+
+        when(medicalClinicClient.getAvailableVisits(null, null, 1, pageable))
+                .thenThrow(FeignException.BadRequest.class);
+
+        FeignException.BadRequest exception = assertThrows(FeignException.BadRequest.class,
+                () -> visitService.getAvailableVisits(null, null, 1, pageable));
+
+        assertNotNull(exception);
     }
-
-
-
-
-
 }
