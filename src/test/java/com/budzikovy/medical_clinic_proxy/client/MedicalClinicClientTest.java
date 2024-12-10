@@ -4,6 +4,7 @@ import com.budzikovy.medical_clinic_proxy.model.dto.VisitDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,4 +166,81 @@ public class MedicalClinicClientTest {
         assertEquals(result.getVisitStartTime(), availableVisit.getVisitStartTime());
         assertEquals(result.getVisitEndTime(), availableVisit.getVisitEndTime());
     }
+
+    @Test
+    public void getAvailableVisitsWithRetry_503_RetryExceptionThrown () throws JsonProcessingException {
+
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+                .inScenario("Retry")
+                        .whenScenarioStateIs(Scenario.STARTED)
+                        .willReturn(aResponse()
+                                .withStatus(503)
+                                .withHeader(HttpHeaders.RETRY_AFTER, "1"))
+                        .willSetStateTo("Attempt 1")
+                );
+
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+                .inScenario("Retry")
+                .whenScenarioStateIs("Attempt 1")
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withHeader(HttpHeaders.RETRY_AFTER, "1"))
+                .willSetStateTo("Success"));
+
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+                .inScenario("Retry")
+                .whenScenarioStateIs("Success")
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(objectMapper.writeValueAsString(availableVisit))));
+
+        String url = "http://localhost:8091/visits/available?doctorId=1";
+
+        assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
+
+        ResponseEntity<VisitDto> response = restTemplate.getForEntity(url, VisitDto.class);
+
+        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        VisitDto result = response.getBody();
+        assertNotNull(result);
+        assertEquals(result.getId(), availableVisit.getId());
+        assertEquals(result.getDoctorId(), availableVisit.getDoctorId());
+        assertEquals(result.getPatientId(), availableVisit.getPatientId());
+        assertEquals(result.getVisitStartTime(), availableVisit.getVisitStartTime());
+        assertEquals(result.getVisitEndTime(), availableVisit.getVisitEndTime());
+
+    }
+
+    @Test
+    public void RetryOn503Error (){
+        wireMockServer.stubFor(get("/visits/available?doctorId=1")
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withHeader(HttpHeaders.RETRY_AFTER, "1")));
+
+        String url = "http://localhost:8091/visits/available?doctorId=1";
+
+        assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
+
+        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
+
+    }
+
+    @Test
+    public void RetryOn500Error () throws JsonProcessingException {
+        wireMockServer.stubFor(get("/visits/available?doctorId=1")
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withHeader(HttpHeaders.RETRY_AFTER, "1")));
+
+        String url = "http://localhost:8091/visits/available?doctorId=1";
+
+        assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
+
+        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
+
+    }
+
 }

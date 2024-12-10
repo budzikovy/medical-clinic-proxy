@@ -32,4 +32,10 @@ public class MedicalClinicProxyExceptionHandler {
         ErrorMessageDTO errorMessageDTO = new ErrorMessageDTO(errorMessage, LocalDateTime.now(), HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(errorMessageDTO, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
 }
