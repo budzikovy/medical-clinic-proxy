@@ -18,13 +18,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@AutoConfigureWireMock(port = 8091)
+@AutoConfigureWireMock(port = 8089)
 @NoArgsConstructor
 public class MedicalClinicClientTest {
 
@@ -40,7 +41,7 @@ public class MedicalClinicClientTest {
     public void setup() {
         wireMockServer.start();
         restTemplate = new RestTemplateBuilder()
-                .rootUri("http://localhost:8091")
+                .rootUri("http://localhost:8090")
                 .build();
     }
 
@@ -68,25 +69,24 @@ public class MedicalClinicClientTest {
 
     @Test
     public void getVisitsByPatient_DataCorrect_VisitsReturned() throws JsonProcessingException {
-
-        wireMockServer.stubFor(get(urlEqualTo("/visits?patientId=1"))
+        wireMockServer.stubFor(get(urlEqualTo("/visits?patientId=1&size=10&page=0"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsBytes(visitDTO))));
+                        .withBody(objectMapper.writeValueAsBytes(List.of(visitDTO)))));
 
-        String url = "http://localhost:8091/visits?patientId=1";
+        String url = "/visits?patientId=1&size=10&page=0";
 
-        ResponseEntity<VisitDto> response = restTemplate.getForEntity(url, VisitDto.class);
+        ResponseEntity<VisitDto[]> response = restTemplate.getForEntity(url, VisitDto[].class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        VisitDto result = response.getBody();
+        VisitDto[] result = response.getBody();
         assertNotNull(result);
-        assertEquals(result.getId(), visitDTO.getId());
-        assertEquals(result.getDoctorId(), visitDTO.getDoctorId());
-        assertEquals(result.getPatientId(), visitDTO.getPatientId());
-        assertEquals(result.getVisitStartTime(), visitDTO.getVisitStartTime());
-        assertEquals(result.getVisitEndTime(), visitDTO.getVisitEndTime());
+        assertEquals(result[0].getId(), visitDTO.getId());
+        assertEquals(result[0].getDoctorId(), visitDTO.getDoctorId());
+        assertEquals(result[0].getPatientId(), visitDTO.getPatientId());
+        assertEquals(result[0].getVisitStartTime(), visitDTO.getVisitStartTime());
+        assertEquals(result[0].getVisitEndTime(), visitDTO.getVisitEndTime());
     }
 
     @Test
@@ -106,7 +106,7 @@ public class MedicalClinicClientTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(objectMapper.writeValueAsString(visitDTO2))));
 
-        String url = "http://localhost:8091/visits/6/patient/1";
+        String url = "http://localhost:8090/visits/6/patient/1";
 
         ResponseEntity<VisitDto> response = restTemplate.exchange(url, HttpMethod.PUT, null, VisitDto.class);
 
@@ -123,63 +123,71 @@ public class MedicalClinicClientTest {
     @Test
     public void getAvailableVisitsByDoctorId_DataCorrect_VisitsReturned() throws JsonProcessingException {
 
-        wireMockServer.stubFor(get("/visits/available?doctorId=1")
+        VisitDto availableVisit = VisitDto.builder()
+                .id(2L)
+                .visitStartTime(LocalDateTime.of(2024, 12, 13, 10, 0, 0))
+                .visitEndTime(LocalDateTime.of(2024, 12, 13, 10, 15, 0))
+                .doctorId(1L)
+                .patientId(null)
+                .build();
+
+        wireMockServer.stubFor(get("/visits/available?doctorId=1&days=1&size=10&page=0")
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(objectMapper.writeValueAsString(availableVisit))));
+                        .withBody(objectMapper.writeValueAsString(List.of(availableVisit)))));
 
-        String url = "http://localhost:8091/visits/available?doctorId=1";
+        String url = "/visits/available?doctorId=1&days=1&size=10&page=0";
 
-        ResponseEntity<VisitDto> response = restTemplate.getForEntity(url, VisitDto.class);
+        ResponseEntity<VisitDto[]> response = restTemplate.getForEntity(url, VisitDto[].class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        VisitDto result = response.getBody();
+        VisitDto[] result = response.getBody();
         assertNotNull(result);
-        assertEquals(result.getId(), availableVisit.getId());
-        assertEquals(result.getDoctorId(), availableVisit.getDoctorId());
-        assertEquals(result.getPatientId(), availableVisit.getPatientId());
-        assertEquals(result.getVisitStartTime(), availableVisit.getVisitStartTime());
-        assertEquals(result.getVisitEndTime(), availableVisit.getVisitEndTime());
+        assertEquals(result[0].getId(), availableVisit.getId());
+        assertEquals(result[0].getDoctorId(), availableVisit.getDoctorId());
+        assertEquals(result[0].getPatientId(), availableVisit.getPatientId());
+        assertEquals(result[0].getVisitStartTime(), availableVisit.getVisitStartTime());
+        assertEquals(result[0].getVisitEndTime(), availableVisit.getVisitEndTime());
     }
 
     @Test
     public void getAvailableVisitsBySpecializationAndDay_DataCorrect_VisitsReturned() throws JsonProcessingException {
 
         wireMockServer.stubFor(get(urlEqualTo(
-                "/visits/available?specialization=surgeon&days=10&page=0&size=10"))
+                "/visits/available?specialization=surgeon&days=10&size=10&page=0"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(objectMapper.writeValueAsString(availableVisit))));
+                        .withBody(objectMapper.writeValueAsString(List.of(availableVisit)))));
 
-        String url = "http://localhost:8091/visits/available?specialization=surgeon&days=10&page=0&size=10";
+        String url = "/visits/available?specialization=surgeon&days=10&size=10&page=0";
 
-        ResponseEntity<VisitDto> response = restTemplate.getForEntity(url, VisitDto.class);
+        ResponseEntity<VisitDto[]> response = restTemplate.getForEntity(url, VisitDto[].class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        VisitDto result = response.getBody();
+        VisitDto[] result = response.getBody();
         assertNotNull(result);
-        assertEquals(result.getId(), availableVisit.getId());
-        assertEquals(result.getDoctorId(), availableVisit.getDoctorId());
-        assertEquals(result.getPatientId(), availableVisit.getPatientId());
-        assertEquals(result.getVisitStartTime(), availableVisit.getVisitStartTime());
-        assertEquals(result.getVisitEndTime(), availableVisit.getVisitEndTime());
+        assertEquals(result[0].getId(), availableVisit.getId());
+        assertEquals(result[0].getDoctorId(), availableVisit.getDoctorId());
+        assertEquals(result[0].getPatientId(), availableVisit.getPatientId());
+        assertEquals(result[0].getVisitStartTime(), availableVisit.getVisitStartTime());
+        assertEquals(result[0].getVisitEndTime(), availableVisit.getVisitEndTime());
     }
 
     @Test
     public void getAvailableVisitsWithRetry_503_RetryExceptionThrown () throws JsonProcessingException {
 
-        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0"))
                 .inScenario("Retry")
-                        .whenScenarioStateIs(Scenario.STARTED)
-                        .willReturn(aResponse()
-                                .withStatus(503)
-                                .withHeader(HttpHeaders.RETRY_AFTER, "1"))
-                        .willSetStateTo("Attempt 1")
-                );
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withHeader(HttpHeaders.RETRY_AFTER, "1"))
+                .willSetStateTo("Attempt 1")
+        );
 
-        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0"))
                 .inScenario("Retry")
                 .whenScenarioStateIs("Attempt 1")
                 .willReturn(aResponse()
@@ -187,60 +195,57 @@ public class MedicalClinicClientTest {
                         .withHeader(HttpHeaders.RETRY_AFTER, "1"))
                 .willSetStateTo("Success"));
 
-        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1"))
+        wireMockServer.stubFor(get(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0"))
                 .inScenario("Retry")
                 .whenScenarioStateIs("Success")
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(objectMapper.writeValueAsString(availableVisit))));
+                        .withBody(objectMapper.writeValueAsString(List.of(availableVisit)))));
 
-        String url = "http://localhost:8091/visits/available?doctorId=1";
+        String url = "/visits/available?doctorId=1&days=1&size=10&page=0";
 
         assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
 
-        ResponseEntity<VisitDto> response = restTemplate.getForEntity(url, VisitDto.class);
+        ResponseEntity<VisitDto[]> response = restTemplate.getForEntity(url, VisitDto[].class);
 
-        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
+        verify(4, getRequestedFor(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0")));
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        VisitDto result = response.getBody();
+        VisitDto[] result = response.getBody();
         assertNotNull(result);
-        assertEquals(result.getId(), availableVisit.getId());
-        assertEquals(result.getDoctorId(), availableVisit.getDoctorId());
-        assertEquals(result.getPatientId(), availableVisit.getPatientId());
-        assertEquals(result.getVisitStartTime(), availableVisit.getVisitStartTime());
-        assertEquals(result.getVisitEndTime(), availableVisit.getVisitEndTime());
-
+        assertEquals(result[0].getId(), availableVisit.getId());
+        assertEquals(result[0].getDoctorId(), availableVisit.getDoctorId());
+        assertEquals(result[0].getPatientId(), availableVisit.getPatientId());
+        assertEquals(result[0].getVisitStartTime(), availableVisit.getVisitStartTime());
+        assertEquals(result[0].getVisitEndTime(), availableVisit.getVisitEndTime());
     }
 
     @Test
     public void RetryOn503Error (){
-        wireMockServer.stubFor(get("/visits/available?doctorId=1")
+        wireMockServer.stubFor(get("/visits/available?doctorId=1&days=1&size=10&page=0")
                 .willReturn(aResponse()
                         .withStatus(503)
                         .withHeader(HttpHeaders.RETRY_AFTER, "1")));
 
-        String url = "http://localhost:8091/visits/available?doctorId=1";
+        String url = "/visits/available?doctorId=1&days=1&size=10&page=0";
 
         assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
 
-        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
-
+        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0")));
     }
 
     @Test
-    public void RetryOn500Error () throws JsonProcessingException {
-        wireMockServer.stubFor(get("/visits/available?doctorId=1")
+    public void RetryOn500Error (){
+        wireMockServer.stubFor(get("/visits/available?doctorId=1&days=1&size=10&page=0")
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withHeader(HttpHeaders.RETRY_AFTER, "1")));
 
-        String url = "http://localhost:8091/visits/available?doctorId=1";
+        String url = "/visits/available?doctorId=1&days=1&size=10&page=0";
 
         assertThrows(Exception.class, () -> restTemplate.getForEntity(url, visitDTO.getClass()));
 
-        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1")));
-
+        verify(3, getRequestedFor(urlEqualTo("/visits/available?doctorId=1&days=1&size=10&page=0")));
     }
 
 }
