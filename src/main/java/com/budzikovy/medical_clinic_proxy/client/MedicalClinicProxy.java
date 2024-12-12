@@ -14,7 +14,7 @@ import java.util.List;
 
 @FeignClient(name = "medicalClinicClient", url = "${spring.cloud.openfeign.client.config.medicalClinicClient.url}",
         configuration = FeignConfig.class, fallback = MedicalClinicClientFallback.class)
-public interface MedicalClinicClient {
+public interface MedicalClinicProxy {
 
     @GetMapping("/visits")
     List<VisitDto> getVisitsByPatient(@RequestParam("patientId") Long patientId, Pageable pageable);

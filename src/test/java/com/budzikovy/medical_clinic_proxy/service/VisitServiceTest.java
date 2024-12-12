@@ -1,6 +1,6 @@
 package com.budzikovy.medical_clinic_proxy.service;
 
-import com.budzikovy.medical_clinic_proxy.client.MedicalClinicClient;
+import com.budzikovy.medical_clinic_proxy.client.MedicalClinicProxy;
 import com.budzikovy.medical_clinic_proxy.model.dto.VisitDto;
 import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,12 +17,12 @@ import static org.mockito.Mockito.when;
 
 public class VisitServiceTest {
 
-    MedicalClinicClient medicalClinicClient;
+    MedicalClinicProxy medicalClinicClient;
     VisitService visitService;
 
     @BeforeEach
     void setup() {
-        this.medicalClinicClient = Mockito.mock(MedicalClinicClient.class);
+        this.medicalClinicClient = Mockito.mock(MedicalClinicProxy.class);
         this.visitService = new VisitService(medicalClinicClient);
     }
 

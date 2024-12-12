@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureWireMock(port = 8089)
 @NoArgsConstructor
-public class MedicalClinicClientTest {
+public class MedicalClinicProxyIntegrationTest {
 
     @Autowired
     WireMockServer wireMockServer;

@@ -1,6 +1,6 @@
 package com.budzikovy.medical_clinic_proxy.service;
 
-import com.budzikovy.medical_clinic_proxy.client.MedicalClinicClient;
+import com.budzikovy.medical_clinic_proxy.client.MedicalClinicProxy;
 import com.budzikovy.medical_clinic_proxy.model.dto.VisitDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VisitService {
 
-    private final MedicalClinicClient medicalClinicClient;
+    private final MedicalClinicProxy medicalClinicClient;
 
     public List<VisitDto> getVisitsByPatient(Long patientId, Pageable pageable) {
         return medicalClinicClient.getVisitsByPatient(patientId, pageable);

@@ -1,6 +1,6 @@
 package com.budzikovy.medical_clinic_proxy.config;
 
-import com.budzikovy.medical_clinic_proxy.client.MedicalClinicClient;
+import com.budzikovy.medical_clinic_proxy.client.MedicalClinicProxy;
 import com.budzikovy.medical_clinic_proxy.model.dto.VisitDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 @Component
-public class MedicalClinicClientFallback implements MedicalClinicClient {
+public class MedicalClinicClientFallback implements MedicalClinicProxy {
 
     @Override
     public List<VisitDto> getVisitsByPatient(Long patientId, Pageable pageable) {
