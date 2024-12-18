@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medical-clinic-proxy
+    ports:
+      - "8081:8081"
+    networks:
+      - medical-clinic-network
+
+    environment:
+      SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_MEDICALCLINICCLIENT_URL: http://app:8080
+
+networks:
+  medical-clinic-network:
+    external: true
