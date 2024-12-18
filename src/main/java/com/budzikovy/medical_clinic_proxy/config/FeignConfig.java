@@ -1,5 +1,6 @@
 package com.budzikovy.medical_clinic_proxy.config;
 
+import feign.Logger;
 import feign.Retryer;
 import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
@@ -18,4 +19,8 @@ public class FeignConfig {
         return new CustomErrorDecoder();
     }
 
+    @Bean
+    public Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
 }

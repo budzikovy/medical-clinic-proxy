@@ -28,4 +28,5 @@ public interface MedicalClinicProxy {
             @RequestParam(required = false) String specialization,
             @RequestParam(required = false, defaultValue = "1") int days,
             Pageable pageable);
+    
 }
