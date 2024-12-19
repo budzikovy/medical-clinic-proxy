@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- logstash-logback-encoder -->
-    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <!-- Adres Logstash -->
-        <destination>localhost:5044</destination>
+<!--    &lt;!&ndash; logstash-logback-encoder &ndash;&gt;-->
+<!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
+<!--        &lt;!&ndash; Adres Logstash &ndash;&gt;-->
+<!--        <destination>localhost:5044</destination>-->
 
-        <!-- Ustawienia odporności -->
-        <keepAliveDuration>5000</keepAliveDuration>
-        <shutdownGracePeriod>5000</shutdownGracePeriod>
+<!--        &lt;!&ndash; Ustawienia odporności &ndash;&gt;-->
+<!--        <keepAliveDuration>5000</keepAliveDuration>-->
+<!--        <shutdownGracePeriod>5000</shutdownGracePeriod>-->
 
-        <!-- Encoder Logstash -->
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"application":"medical_clinic_proxy"}</customFields>
-        </encoder>
+<!--        &lt;!&ndash; Encoder Logstash &ndash;&gt;-->
+<!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder">-->
+<!--            <customFields>{"application":"medical_clinic_proxy"}</customFields>-->
+<!--        </encoder>-->
 
-        <!-- Fallback przy błędach -->
-        <failureHandler class="ch.qos.logback.core.status.WarnStatusListener"/>
-    </appender>
+<!--        &lt;!&ndash; Fallback przy błędach &ndash;&gt;-->
+<!--        <failureHandler class="ch.qos.logback.core.status.WarnStatusListener"/>-->
+<!--    </appender>-->
 
     <!-- Konsolowy appender dla lokalnego podglądu -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
