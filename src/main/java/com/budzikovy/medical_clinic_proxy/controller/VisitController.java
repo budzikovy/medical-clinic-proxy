@@ -18,14 +18,6 @@ public class VisitController {
     private static final Logger logger = LoggerFactory.getLogger(VisitController.class);
     private final VisitService visitService;
 
-    @GetMapping
-    public List<VisitDto> getVisitsByPatient(@RequestParam("patientId") Long patientId, Pageable pageable) {
-        logger.info("Received GET request for visits by patient ID: {} with pageable: {}", patientId, pageable);
-        List<VisitDto> visits = visitService.getVisitsByPatient(patientId, pageable);
-        logger.info("Returning {} visits for patient ID: {}", visits.size(), patientId);
-        return visits;
-    }
-
     @PutMapping("/{visitId}/patient/{patientId}")
     public VisitDto assignPatientToVisit(@PathVariable("visitId") Long visitId, @PathVariable("patientId") Long patientId) {
         logger.info("Received PUT request to assign patient ID: {} to visit ID: {}", patientId, visitId);
@@ -44,4 +36,43 @@ public class VisitController {
         logger.info("Returning {} visits for doctor with ID: {} or specialization: {} and days: {}", availableVisits.size(), doctorId, specialization, days);
         return availableVisits;
     }
+
+    @GetMapping
+    public List<VisitDto> getVisits(@RequestParam(required = false) Long patientId,
+                                    @RequestParam(required = false) Long doctorId,
+                                    @RequestParam(required = false) String timeFilter,
+                                    Pageable pageable) {
+        return visitService.getVisits(patientId, doctorId, timeFilter, pageable);
+    }
+
+    @DeleteMapping("/{visitId}")
+    public VisitDto cancelVisit(@PathVariable("visitId") Long visitId) {
+        logger.info("Received DELETE request for visit with ID: {}", visitId);
+        VisitDto canceledVisit = visitService.cancelVisit(visitId);
+        logger.info("Successfully deleted visit with ID: {}", visitId);
+        return canceledVisit;
+    }
+
+    @GetMapping("/range")
+    public List<VisitDto> getVisitsByDateRange(@RequestParam(required = false) String startDate,
+                                               @RequestParam(required = false) String endDate,
+                                               @RequestParam(required = false) String specialization,
+                                               Pageable pageable) {
+        logger.info("Received GET request for visits by date range: {} to {}, specialization: {}", startDate, endDate, specialization);
+        List<VisitDto> visits = visitService.getVisitsByDateRange(startDate, endDate, specialization, pageable);
+        logger.info("Returning {} visits in date range from {} to {}", visits.size(), startDate, endDate);
+        return visits;
+    }
+
+    @GetMapping("/available/range")
+    public List<VisitDto> getAvailableVisitsByDateRangeAndSpecialization(@RequestParam String startDate,
+                                                                         @RequestParam String endDate,
+                                                                         @RequestParam(required = false) String specialization,
+                                                                         Pageable pageable) {
+        logger.info("Received GET request for available visits by date range: {} to {}, specialization: {}", startDate, endDate, specialization);
+        List<VisitDto> availableVisits = visitService.getAvailableVisitsByDateRangeAndSpecialization(startDate, endDate, specialization, pageable);
+        logger.info("Returning {} available visits in date range from {} to {}", availableVisits.size(), startDate, endDate);
+        return availableVisits;
+    }
+
 }
